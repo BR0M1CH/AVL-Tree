@@ -50,6 +50,8 @@ class Node(object):
 
 class Tree(object):
 
+    bufferTree = None
+
     def __init__(self, data):  
         self.root = Node(data)
 
@@ -86,9 +88,8 @@ class Tree(object):
                 node.addleft(data)
                 if not node.hasright():
                     node.balance -= 1
-                    if data == 5:
-                        print(f"NODA = {node}")
                     return node, 2
+                node.balance+=1
                 return node, 1
         
         elif data > node.data:
@@ -97,7 +98,6 @@ class Tree(object):
                 node.right = res[0]
                 if res[1] == 2:
                     node.balance += 1
-                    print(f"NODA = {node}")
                     if node.balance > 1:
                         if node is not self.root:
                             node = self.balancing(node)
@@ -111,6 +111,7 @@ class Tree(object):
                 if not node.hasleft():
                     node.balance += 1
                     return node, 2
+                node.balance -=1
                 return node, 1
         
                 
@@ -124,9 +125,7 @@ class Tree(object):
             node.right = newnode.left
             newnode.left = node
             newnode.balance = 0
-            #newnode.right.balance = 1
             newnode.left.balance = 0
-            print("left")
         else:
             newnode = node.right
             node.right = None
@@ -136,7 +135,6 @@ class Tree(object):
             try:
                 newnode.right.balance = 0
             except: pass
-            print("noleft")
         return newnode
        
     
@@ -149,7 +147,6 @@ class Tree(object):
             node.left = newnode.right
             newnode.right = node
             newnode.balance = 0
-            #newnode.left.balance = -1
             newnode.right.balance = 0
         else:
             newnode = node.left
@@ -160,7 +157,6 @@ class Tree(object):
             except: pass
             newnode.balance = 0
             newnode.right.balance = 0
-            print("noright")
         return newnode
         
         
@@ -170,24 +166,15 @@ class Tree(object):
         newnode = node.copy()
         newnode.right = self.right_rotate(newnode.right)
         newnode = self.left_rotate(newnode)
-        print("bigright")
         return newnode
     
     def big_right_rotate(self, node):
         newnode = node.copy()
         newnode.left = self.left_rotate(newnode.left)
-        print(newnode)
         newnode = self.right_rotate(newnode)
-        print(newnode)
         return newnode
     
     def balancing(self, noda) -> Node:
-        # if noda is self.root:
-        #     print(999999)
-        #     print(noda.balance)
-        #     print(noda.left.balance)
-        #     print(noda.right.balance)
-        # print(noda)
         if noda.balance > 1:
             if noda.right.balance == -1:
                 newnode = self.big_left_rotate(noda)
@@ -199,6 +186,90 @@ class Tree(object):
             elif noda.left.balance == -1:
                 newnode = self.right_rotate(noda)       
         return(newnode)
+    
+
+    def sum(self, other, node = None):
+        if node == None:
+            node = other.root
+        if node.hasleft():
+            self.sum(other, node.left)
+        self.add(node.data)
+        if node.hasright():
+            self.sum(other, node.left)
+        return self
+    
+    def check(self,data, node = None):
+        if node == None:
+            node = self.root
+        if data == node.data:
+            return True
+        if data < node.data:
+            if node.hasleft():
+                return self.check(data, node.left)
+            return False
+        if data > node.data:
+            if node.hasright():
+                return self.check(data, node.right)
+            return False
+        return False
+    
+    def modify_check(self, other, node = None):
+        if node == None:
+            node = self.root
+        if other.check(node.data):
+            return True, node.data
+        if node.hasleft():
+            res = self.modify_check(other, node.left)
+            try: 
+                if res[0]:
+                    return res
+            except: pass
+        if node.hasright():
+            res = self.modify_check(other, node.right)
+            try: 
+                if res[0] == True:
+                    return res
+            except: pass
+
+
+    def helper_conuction(self, other, node = None):
+        if node == None:
+            node = self.root
+        if other.check(node.data):
+            Tree.bufferTree.add(node.data)
+        if node.hasleft():
+            self.helper_conuction(other, node.left)
+        if node.hasright():
+            self.helper_conuction(other, node.right)
+        
+            
+
+
+    
+    def conuction(self, other):
+        Tree.bufferTree = None
+        res = self.modify_check(other)
+        try: 
+            if res[0] == True:
+                Tree.bufferTree = Tree(res[1])
+                self.helper_conuction(other)
+                return Tree.bufferTree
+        except:
+            return None
+        
+        
+        
+
+
+
+            
+            
+        
+
+        
+        
+
+
 
     
 
@@ -207,41 +278,32 @@ class Tree(object):
 
 
 t = Tree(10)
+b = Tree(12)
 
 t.add(1)
-t.add(2)
-t.add(3)
-t.add(4)
 t.add(5)
-t.add(6)
-t.add(7)
+t.add(11)
+t.add(15)
 t.add(8)
-t.add(9)
+t.add(6)
 t.print()
-# t.add(2)
-# t.print()
-# print("_"*30)
-# t.add(5)
-# t.print()
-# print("_"*30)
-# t.add(11)
-# t.print()
-# print("_"*30)
-# t.add(7)
-# t.print()
-# print("_"*30)
-# t.add(8)
-# t.print()
-# print("_"*30)
-# t.add(13)
-# t.print()
-# print("_"*30)
-# t.add(1)
-# t.print()
-# print("_"*30)
-# t.add(6)
-# t.print()
-# print("_"*30)
-# t.add(24)
-# t.print()
-# print("_"*30)
+print("-"*20)
+
+b.add(3)
+b.add(4)
+b.add(12)
+b.add(15)
+#b.print()
+b.add(5)
+b.add(6)
+b.print()
+print("-"*20)
+
+
+print("КОНЪЮНКЦИЯ")
+c = t.conuction(b)
+if isinstance(c, Tree):
+    c.print()
+else:
+    print(None)
+
