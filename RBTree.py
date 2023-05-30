@@ -1,12 +1,16 @@
-import random
-
-
-class Node:
+class Node(object):
 
     def __init__(self, data):
-        self.left = self.right = None
         self.data = data
         self.balance = 0
+        self.left = self.right = None
+        
+    def copy(self):
+        newnode = Node(self.data)
+        newnode.left = self.left
+        newnode.right = self.right
+        newnode.balance = self.balance
+        return newnode
 
     def addleft(self, data):
         self.left = Node(data)
@@ -14,146 +18,230 @@ class Node:
     def addright(self, data):
         self.right = Node(data)
 
+    
     def hasleft(self):
-        if self.left != None:
-            return True
-        return False
+        if self.left==None:
+            return False
+        return True
     
+
     def hasright(self):
-        if self.right != None:
-            return True
-        return False
+        if self.right==None:
+            return False
+        return True
     
-    def balancing(self):
-
-        if self.balance < -1:
-            if self.left.balance == -1:
-                buffer = self.left
-                self.left = None
-                buffer.right = self
-                self = buffer
-            elif self.left.balance == 1:
-                buffer = self.left
-                self.left = self.left.right
-                buffer.right = None
-                self.left.left = buffer
-                buffer = self.left
-                self.left = None
-                buffer.right = self
-                self = buffer
-        elif self.balance > 1:
-            if self.right.balance == 1:
-                buffer = self.right
-                self.right = None
-                buffer.left = self
-                self = buffer
-            elif self.right.balance == -1:
-                buffer = self.right
-                self.right = self.right.left
-                buffer.left = None
-                self.right.right = buffer
-                buffer = self.right
-                self.right = None
-                buffer.left = self
-                self = buffer
+    
+    def __str__(self):
+        a = str(self.data)
+        if self.hasleft():
+            a+=f", left: {self.left.data}"
+        if self.hasright():
+            a+=f", right: {self.right.data}"
+        a+=f", balance: {self.balance}"
+        return(a)
+    
+    def calc_height(self, level = 0):
+        if self.hasleft():
+            l = self.calc_height(self.left, level+1)
+        
+        
+        
 
 
-class Tree:
+class Tree(object):
 
-    def __init__(self, data):   
+    def __init__(self, data):  
         self.root = Node(data)
-        self.size = 1
-        self.currentNode = self.root      
 
-    
-    def add(self, data, **start):
-        
-        if start == self.root:
-            self.currentNode = self.root
 
-        if data == self.currentNode.data:
-            return
-   
-        elif data < self.currentNode.data:
-            if self.currentNode.hasleft():
-                self.currentNode = self.currentNode.left
-                self.add(data)
-            else:
-                self.currentNode.addleft(data)
-                self.currentNode.balance -=1
-                if self.currentNode.balance < -1:
-                    self.currentNode.balancing()
-      
-        elif data > self.currentNode.data:
-            if self.currentNode.hasright():
-                self.currentNode = self.currentNode.right
-                self.add(data)
-            else:
-                self.currentNode.addright(data)
-                self.currentNode.balance+=1
-                if self.currentNode.balance > 1:
-                    self.currentNode.balancing()
-        
-    
-    def find(self, data, **start):
-
-        if start == self.root:
-            self.currentNode = self.root
-
-        if data < self.currentNode.data:
-            if self.currentNode.hasleft():
-                self.currentNode = self.currentNode.left
-                self.find(data)
-            else:
-                self.currentNode = self.root
-                return False
-            
-        elif data > self.currentNode.data:
-            if self.currentNode.hasright():
-                self.currentNode = self.currentNode.right
-                self.find(data)
-            else:
-                self.currentNode = self.root
-                return False
-        
-        elif data == self.currentNode.data:
-            self.currentNode = self.root
-            return True
-
-    
-    def show(self, node):
+    def print(self, node=None):
+        if node==None:
+            node = self.root
         if node.hasleft():
-            self.show(node.left)
-        print(node.data)
+            self.print(node = node.left)
+        print(node)
         if node.hasright():
-            self.show(node.right)
+            self.print(node = node.right)
+
+
+    def add(self, data, node=None, level = 0):
+        if node == None: node = self.root
+        if data == node.data: return node, 0
+        
+        if data < node.data:
+            if node.hasleft():
+                res = self.add(data, node.left, level+1)
+                node.left = res[0]
+                if res[1] == 2:
+                    node.balance -= 1
+                    if node.balance < -1:
+                        if node is not self.root:
+                            node = self.balancing(node)
+                            return node, 1
+                        else:
+                            self.root = self.balancing(self.root)
+                            return self.root, 1
+                return node, res[1]
+            else:
+                node.addleft(data)
+                if not node.hasright():
+                    node.balance -= 1
+                    if data == 5:
+                        print(f"NODA = {node}")
+                    return node, 2
+                return node, 1
+        
+        elif data > node.data:
+            if node.hasright():
+                res = self.add(data, node.right, level+1)
+                node.right = res[0]
+                if res[1] == 2:
+                    node.balance += 1
+                    print(f"NODA = {node}")
+                    if node.balance > 1:
+                        if node is not self.root:
+                            node = self.balancing(node)
+                            return node, 1
+                        else:
+                            self.root = self.balancing(self.root)
+                            return self.root, 1
+                return node, res[1]
+            else:
+                node.addright(data)
+                if not node.hasleft():
+                    node.balance += 1
+                    return node, 2
+                return node, 1
+        
+                
+
+    def left_rotate(self, node):
+        buffer = Node(node.data)
+        buffer.right = node.right
+        buffer.left = node.left 
+        if node.right.hasleft():
+            newnode = node.right
+            node.right = newnode.left
+            newnode.left = node
+            newnode.balance = 0
+            #newnode.right.balance = 1
+            newnode.left.balance = 0
+            print("left")
+        else:
+            newnode = node.right
+            node.right = None
+            newnode.left = node
+            newnode.left.balance = 0
+            newnode.balance = 0
+            try:
+                newnode.right.balance = 0
+            except: pass
+            print("noleft")
+        return newnode
+       
+    
+    def right_rotate(self, node):
+        buffer = Node(node.data)
+        buffer.right = node.right
+        buffer.left = node.left 
+        if node.left.hasright():
+            newnode = node.left
+            node.left = newnode.right
+            newnode.right = node
+            newnode.balance = 0
+            #newnode.left.balance = -1
+            newnode.right.balance = 0
+        else:
+            newnode = node.left
+            node.left = None
+            newnode.right = node
+            try:
+                newnode.left.balance = 0
+            except: pass
+            newnode.balance = 0
+            newnode.right.balance = 0
+            print("noright")
+        return newnode
+        
+        
+
+    
+    def big_left_rotate(self, node):
+        newnode = node.copy()
+        newnode.right = self.right_rotate(newnode.right)
+        newnode = self.left_rotate(newnode)
+        print("bigright")
+        return newnode
+    
+    def big_right_rotate(self, node):
+        newnode = node.copy()
+        newnode.left = self.left_rotate(newnode.left)
+        print(newnode)
+        newnode = self.right_rotate(newnode)
+        print(newnode)
+        return newnode
+    
+    def balancing(self, noda) -> Node:
+        # if noda is self.root:
+        #     print(999999)
+        #     print(noda.balance)
+        #     print(noda.left.balance)
+        #     print(noda.right.balance)
+        # print(noda)
+        if noda.balance > 1:
+            if noda.right.balance == -1:
+                newnode = self.big_left_rotate(noda)
+            elif noda.right.balance == 1:
+                newnode = self.left_rotate(noda)
+        elif noda.balance < -1:
+            if noda.left.balance == 1:
+                newnode = self.big_right_rotate(noda)
+            elif noda.left.balance == -1:
+                newnode = self.right_rotate(noda)       
+        return(newnode)
+
+    
 
 
         
-
-
-
 
 
 t = Tree(10)
-t.add(9, start=t.root)
-print("1 added")
-t.add(8, start=t.root)
-print("2 added")
-t.add(3, start=t.root)
-print("3 added")
-t.add(4, start=t.root)
-print("4 added")
-t.add(1, start=t.root)
-print("1 added")
-t.add(5, start=t.root)
-print("5 added")
-t.add(2, start=t.root)
-print("2 added")
-t.add(7, start=t.root)
-print("7 added")
-t.add(6, start=t.root)
-print("6 added")
-t.show(t.root)
 
-
+t.add(1)
+t.add(2)
+t.add(3)
+t.add(4)
+t.add(5)
+t.add(6)
+t.add(7)
+t.add(8)
+t.add(9)
+t.print()
+# t.add(2)
+# t.print()
+# print("_"*30)
+# t.add(5)
+# t.print()
+# print("_"*30)
+# t.add(11)
+# t.print()
+# print("_"*30)
+# t.add(7)
+# t.print()
+# print("_"*30)
+# t.add(8)
+# t.print()
+# print("_"*30)
+# t.add(13)
+# t.print()
+# print("_"*30)
+# t.add(1)
+# t.print()
+# print("_"*30)
+# t.add(6)
+# t.print()
+# print("_"*30)
+# t.add(24)
+# t.print()
+# print("_"*30)
